@@ -70,7 +70,8 @@
   }
 
   @keyframes slowPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.045);} }
-  body.playing .heart-wrap{ animation: slowPulse var(--pulseDur,1.05s) ease-in-out infinite; }
+ body.playing .heart{ animation: slowPulse var(--pulseDur,1.05s) ease-in-out infinite; }
+
 
   /* ===== Stationary Polaroids (spread out + gentle drift) ===== */
   .polaroid-layer{
@@ -334,8 +335,8 @@
     const cx = layerRect.width / 2;
     const cy = layerRect.height / 2;
 
-    const innerR = Math.min(layerRect.width, layerRect.height) * 0.36;
-    const outerR = Math.min(layerRect.width, layerRect.height) * 0.62;
+    const innerR = Math.min(layerRect.width, layerRect.height) * 0.54;
+    const outerR = Math.min(layerRect.width, layerRect.height) * 1.0;
 
     function overlaps(x,y,w,h){
       const pad = 22;
@@ -376,8 +377,8 @@
 
       const rot = rand(-10, 10).toFixed(2);
       card.style.setProperty("--r", rot + "deg");
-      card.style.setProperty("--dx", rand(-10, 10).toFixed(1) + "px");
-      card.style.setProperty("--dy", rand(-10, 10).toFixed(1) + "px");
+      card.style.setProperty("--dx", rand(-16, 16).toFixed(1) + "px");
+      card.style.setProperty("--dy", rand(-16, 16).toFixed(1) + "px");
       card.style.setProperty("--driftDur", rand(7.5, 12.5).toFixed(2) + "s");
 
       const img = document.createElement("img");
@@ -404,10 +405,12 @@
   window.addEventListener("resize", () => placePolaroids(4));
 
   // Buttons / Effects
-  function beatHeart() {
-    heartWrap.animate([{ transform: "scale(1)" }, { transform: "scale(1.08)" }, { transform: "scale(1)" }],
-      { duration: 260, easing: "ease-out" });
-  }
+function beatHeart() {
+  heart.animate(
+    [{ transform: "scale(1)" }, { transform: "scale(1.08)" }, { transform: "scale(1)" }],
+    { duration: 260, easing: "ease-out" }
+  );
+}
 
   function typeWriter(text, speedMs = 34) {
     message.innerHTML = "";
