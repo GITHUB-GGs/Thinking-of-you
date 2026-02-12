@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>For You ❤️</title>
+<title>Happy Valentines day Paris!! ❤️</title>
 
 <style>
   :root{ --pink:#ff69b4; --pink2:#ff1493; }
@@ -317,10 +317,9 @@
   // ===== Stationary Polaroids =====
   const polaroidLayer = document.getElementById("polaroidLayer");
 
-  // Update these to match your uploaded photo file names EXACTLY.
-  // If your photos are in a folder called "photos", use: "photos/name.jpg"
+  // Update because its case-specific
   const photos = ["photo1.jpg","photo2.jpg","photo3.jpg","photo4.jpg"];
-  const captions = ["my favorite person","always & forever","i miss you","us 💗"];
+  const captions = ["my favorite person","always & forever","i love you","us 💗"];
 
   function placePolaroids(count = 6){
     polaroidLayer.innerHTML = "";
@@ -467,13 +466,12 @@
   });
 
   bgm.addEventListener("error", () => {
-    setMusicStatus("Audio couldn't load. Make sure forever-lady-of-soul.mp3 is next to index.html.");
     document.body.classList.remove("playing");
   });
 
   document.getElementById("missBtn").addEventListener("click", () => {
     beatHeart();
-    typeWriter("you will always be the one i love, forever and ever. <3", 34);
+    typeWriter("you will always be the one i love, forever and ever.💗", 34);
     if (!musicReady && bgm.paused) tryStartMusic();
   });
 
