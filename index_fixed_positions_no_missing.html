@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>For You ❤️</title>
+
+<style>
+  :root{ --pink:#ff69b4; --pink2:#ff1493; }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:#000; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    min-height:100vh;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color:#fff; position:relative;
+  }
+
+  /* ===== Stylized twinkling stars ===== */
+  .starfield{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .star{
+    position:absolute; width:var(--s,18px); height:var(--s,18px);
+    opacity:0;
+    transform:translate3d(0,0,0) rotate(var(--r,0deg));
+    filter: drop-shadow(0 0 7px rgba(168,85,247,.32))
+            drop-shadow(0 0 16px rgba(255,105,180,.16));
+    animation: twinkle var(--tw,2.6s) ease-in-out infinite, shimmer 6.5s ease-in-out infinite;
+    animation-delay: var(--d,0s);
+  }
+  .star svg{ width:100%; height:100%; display:block; }
+  @keyframes twinkle{
+    0%{opacity:.08; transform:translate3d(0,0,0) rotate(var(--r,0deg)) scale(.92);}
+    50%{opacity:.92; transform:translate3d(0,0,0) rotate(var(--r,0deg)) scale(1.04);}
+    100%{opacity:.12; transform:translate3d(0,0,0) rotate(var(--r,0deg)) scale(.96);}
+  }
+  @keyframes shimmer{
+    0%,100%{filter:drop-shadow(0 0 7px rgba(168,85,247,.28)) drop-shadow(0 0 16px rgba(255,105,180,.12));}
+    50%{filter:drop-shadow(0 0 9px rgba(255,105,180,.22)) drop-shadow(0 0 20px rgba(79,70,229,.16));}
+  }
+
+  /* ===== Heart area ===== */
+  .heart-wrap{
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    transform: scale(1);
+  }
+
+  .glow{
+    position:absolute; width:540px; height:540px; border-radius:50%;
+    background:radial-gradient(circle,
+      rgba(255,105,180,.22) 0%,
+      rgba(255,20,147,.12) 35%,
+      rgba(255,255,255,.06) 55%,
+      transparent 72%);
+    filter:blur(7px);
+    z-index:1;
+    transition: filter .6s ease, opacity .6s ease;
+  }
+  body.playing .glow{ filter:blur(8px); opacity:1; }
+
+  .heart{ position:relative; width:420px; height:420px; z-index:2; }
+  .text{
+    position:absolute; color:var(--pink);
+    font-size:17px; white-space:nowrap; letter-spacing:.5px;
+    text-shadow: 0 0 5px var(--pink), 0 0 12px var(--pink2), 0 0 18px rgba(255,255,255,.9);
+    user-select:none; transform-origin:center; will-change:left, top, transform;
+  }
+
+  /* IMPORTANT: pulse only the HEART, not the wrapper (so photos/buttons don't move) */
+  @keyframes slowPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.045);} }
+  body.playing .heart{ animation: slowPulse var(--pulseDur,1.05s) ease-in-out infinite; }
+
+  /* ===== Polaroids (fixed positions + gentle drift) ===== */
+  .polaroid-layer{
+    position:absolute;
+    inset:-260px;              /* lots of space around heart */
+    z-index: 2;
+    pointer-events: auto;
+  }
+
+  .polaroid{
+    position:absolute;
+    width: clamp(160px, 18vw, 240px);
+    padding: 10px 10px 28px 10px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.94);
+    box-shadow:
+      0 14px 36px rgba(0,0,0,.55),
+      0 0 22px rgba(255,105,180,.16);
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+    transition: transform .25s ease, box-shadow .25s ease;
+    cursor: pointer;
+
+    /* subtle motion while still “fixed” */
+    animation: drift var(--driftDur, 10s) ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  @keyframes drift{
+    from{ transform: translate(-50%, -50%) rotate(var(--r,0deg)) translate3d(var(--dx, 0px), var(--dy, 0px), 0); }
+    to  { transform: translate(-50%, -50%) rotate(var(--r,0deg)) translate3d(calc(var(--dx, 0px) * -1), calc(var(--dy, 0px) * -1), 0); }
+  }
+
+  .polaroid:hover{
+    transform: translate(-50%, -50%) rotate(var(--r,0deg)) scale(1.03);
+    box-shadow:
+      0 18px 44px rgba(0,0,0,.62),
+      0 0 28px rgba(255,105,180,.22);
+    animation-play-state: paused;
+  }
+
+  .polaroid img{
+    width:100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display:block;
+    border-radius: 12px;
+    background: #e9e9e9;
+  }
+
+  .polaroid .cap{
+    margin-top: 9px;
+    font-size: 12px;
+    color: rgba(0,0,0,.72);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .polaroid::before{
+    content:"";
+    position:absolute;
+    top:-10px; left:18px;
+    width: 58px; height: 18px;
+    background: rgba(255,255,255,.35);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 6px;
+    transform: rotate(-8deg);
+    box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    pointer-events:none;
+  }
+
+  /* ===== Controls ===== */
+  .buttons{
+    margin-top:16px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; z-index:3;
+  }
+  button{
+    padding:10px 18px; font-size:15px;
+    background:rgba(0,0,0,.35);
+    border:2px solid var(--pink);
+    color:var(--pink);
+    border-radius:999px;
+    cursor:pointer;
+    transition:.25s ease;
+    backdrop-filter: blur(4px);
+  }
+  button:hover{ background:var(--pink); color:#000; box-shadow:0 0 16px var(--pink); }
+
+  body.playing #musicBtn{ box-shadow:0 0 14px rgba(255,105,180,.55), 0 0 34px rgba(255,20,147,.35); }
+  body.playing #musicBtn::after{ content:"  • Now Playing"; font-size:12px; opacity:.85; }
+
+  .hidden-message{
+    margin-top:14px; font-size:18px;
+    opacity:0; transform:translateY(10px);
+    transition: opacity 1.2s ease, transform 1.2s ease;
+    text-align:center; min-height:60px; z-index:3;
+    padding:0 14px; max-width:920px; line-height:1.35;
+  }
+  .hidden-message.show{ opacity:1; transform:translateY(0); }
+
+  .music-status{
+    margin-top:6px; font-size:12px; opacity:.85; z-index:3;
+    text-align:center; padding:0 14px; min-height:18px;
+  }
+
+  .floating-heart{ position:fixed; bottom:-20px; animation: floatUp 4s linear forwards; pointer-events:none; z-index:4; }
+  @keyframes floatUp{ to{ transform:translateY(-110vh); opacity:0; } }
+
+  .cursor::after{ content:"▋"; margin-left:4px; animation: blink .8s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  @media (max-width: 480px){
+    .glow{ width:440px; height:440px; }
+    .heart{ width:340px; height:340px; }
+    .text{ font-size:15px; }
+    .polaroid-layer{ inset:-210px; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="starfield" id="starfield"></div>
+
+  <div class="heart-wrap" id="heartWrap">
+    <div class="glow"></div>
+    <div class="polaroid-layer" id="polaroidLayer" aria-label="memories"></div>
+    <div class="heart" id="heart"></div>
+  </div>
+
+  <div class="buttons">
+    <button id="missBtn">Press if you miss me 💌</button>
+    <button id="hugBtn">Press if you need a hug 💗</button>
+    <button id="musicBtn">Play music 🎶</button>
+  </div>
+
+  <div class="hidden-message" id="message"></div>
+  <div class="music-status" id="musicStatus"></div>
+
+  <audio id="bgm" preload="auto" loop src="forever-lady-of-soul.mp3"></audio>
+
+<script>
+  // ===== Helpers =====
+  function rand(min, max){ return Math.random() * (max - min) + min; }
+
+  // ===== Stars =====
+  const STAR_SVG = `
+  <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#c084fc"/>
+        <stop offset="0.55" stop-color="#a855f7"/>
+        <stop offset="1" stop-color="#7c3aed"/>
+      </linearGradient>
+      <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="rgba(255,255,255,0.0)"/>
+        <stop offset="0.5" stop-color="rgba(255,255,255,0.35)"/>
+        <stop offset="1" stop-color="rgba(255,255,255,0.0)"/>
+      </linearGradient>
+    </defs>
+    <path d="M32 4 L39.5 21.5 L58 24 L44 36.5 L48 55.5 L32 45.5 L16 55.5 L20 36.5 L6 24 L24.5 21.5 Z"
+          fill="url(#g)" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M14 26 C22 18, 34 14, 50 18" fill="none" stroke="url(#shine)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+    <circle cx="22" cy="18" r="2" fill="rgba(255,255,255,0.7)"/>
+  </svg>`;
+
+  const starfield = document.getElementById("starfield");
+  const STAR_COUNT = 105;
+  for(let i=0;i<STAR_COUNT;i++){
+    const s = document.createElement("div");
+    s.className = "star";
+    s.innerHTML = STAR_SVG;
+
+    const size = rand(10, 24);
+    const left = rand(0, 100);
+    const top  = rand(0, 100);
+    const rot  = rand(-25, 25);
+    const tw   = rand(1.6, 3.6);
+    const delay= rand(0, 3.5);
+
+    s.style.setProperty("--s", size + "px");
+    s.style.left = left + "vw";
+    s.style.top  = top + "vh";
+    s.style.setProperty("--r", rot + "deg");
+    s.style.setProperty("--tw", tw + "s");
+    s.style.setProperty("--d", delay + "s");
+
+    const driftX = rand(-10, 10);
+    const driftY = rand(-10, 10);
+    s.animate(
+      [{ transform: `translate3d(0,0,0) rotate(${rot}deg)` },
+       { transform: `translate3d(${driftX}px, ${driftY}px, 0) rotate(${rot}deg)` }],
+      { duration: rand(9000, 16000), direction: "alternate", iterations: Infinity, easing: "ease-in-out" }
+    );
+
+    starfield.appendChild(s);
+  }
+
+  // ===== Heart ring =====
+  const heart = document.getElementById("heart");
+  const message = document.getElementById("message");
+
+  const phrase = "I love you";
+  const points = 44;
+  const scale  = 12;
+  const speed  = 0.6;
+
+  function getCenter(){
+    const rect = heart.getBoundingClientRect();
+    return { cx: rect.width/2, cy: rect.height/2 };
+  }
+
+  const nodes = [];
+  for (let i = 0; i < points; i++) {
+    const baseT = (i / points) * Math.PI * 2;
+    const span = document.createElement("div");
+    span.className = "text";
+    span.innerText = phrase;
+    heart.appendChild(span);
+    nodes.push({ el: span, baseT });
+  }
+
+  function heartXY(t) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+    return { x, y };
+  }
+  function heartDerivative(t) {
+    const dx = 48 * Math.pow(Math.sin(t), 2) * Math.cos(t);
+    const dy = 13 * Math.sin(t) - 10 * Math.sin(2*t) - 6 * Math.sin(3*t) - 4 * Math.sin(4*t);
+    return { dx, dy };
+  }
+
+  let start = null;
+  function animate(ts) {
+    if (!start) start = ts;
+    const time = (ts - start) / 1000;
+    const c = getCenter();
+
+    for (const n of nodes) {
+      const t = n.baseT + time * speed;
+      const p = heartXY(t);
+      const d = heartDerivative(t);
+      const angle = Math.atan2(d.dy, d.dx) * (180 / Math.PI);
+
+      n.el.style.left = (c.cx + p.x * scale) + "px";
+      n.el.style.top  = (c.cy + p.y * scale) + "px";
+      n.el.style.transform = "translate(-50%, -50%) rotate(" + angle + "deg)";
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  // ===== Polaroids (fixed positions = never lose a photo on refresh) =====
+  const photos = ["photo1.jpeg","photo2.jpeg","photo3.jpeg","photo4.jpeg"];
+  const captions = ["my love 💗","always & forever","i love you","my favorite person"];
+
+  const polaroidLayer = document.getElementById("polaroidLayer");
+
+  // 4 distinct anchor spots around the heart
+  const ANCHORS = [
+    { a: -60,  r: 0.86 }, // top-right
+    { a: -120, r: 0.84 }, // top-left
+    { a: 130,  r: 0.88 }, // bottom-left
+    { a: 50,   r: 0.90 }, // bottom-right
+  ];
+
+  function placePolaroidsFixed(){
+    polaroidLayer.innerHTML = "";
+    const layerRect = polaroidLayer.getBoundingClientRect();
+    const cx = layerRect.width / 2;
+    const cy = layerRect.height / 2;
+
+    // overall distance from heart (bigger = more spread out)
+    const baseR = Math.min(layerRect.width, layerRect.height) * 0.48;
+
+    for (let i=0; i<photos.length; i++){
+      const anchor = ANCHORS[i % ANCHORS.length];
+      const rad = anchor.a * Math.PI / 180;
+
+      // small organic jitter (still keeps them in their area)
+      const jitterX = rand(-26, 26);
+      const jitterY = rand(-20, 20);
+
+      const xCenter = cx + Math.cos(rad) * baseR * anchor.r + jitterX;
+      const yCenter = cy + Math.sin(rad) * baseR * anchor.r + jitterY;
+
+      const card = document.createElement("div");
+      card.className = "polaroid";
+      card.style.left = xCenter + "px";
+      card.style.top  = yCenter + "px";
+
+      const rot = rand(-10, 10).toFixed(2);
+      card.style.setProperty("--r", rot + "deg");
+      card.style.setProperty("--dx", rand(-12, 12).toFixed(1) + "px");
+      card.style.setProperty("--dy", rand(-12, 12).toFixed(1) + "px");
+      card.style.setProperty("--driftDur", rand(8.5, 13.5).toFixed(2) + "s");
+
+      const img = document.createElement("img");
+      img.alt = "memory";
+      img.loading = "lazy";
+      img.src = photos[i];
+
+      // If it can't load, show a placeholder (don't remove the card)
+      img.addEventListener("error", () => {
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+          <svg xmlns='http://www.w3.org/2000/svg' width='800' height='600'>
+            <rect width='100%' height='100%' fill='#e9e9e9'/>
+            <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#333' font-family='monospace' font-size='28'>
+              Missing: ${photos[i]}
+            </text>
+          </svg>
+        `);
+      });
+
+      card.addEventListener("click", () => {
+        card.style.zIndex = String(30 + i);
+      });
+
+      const cap = document.createElement("div");
+      cap.className = "cap";
+      cap.textContent = captions[i % captions.length];
+
+      card.appendChild(img);
+      card.appendChild(cap);
+      polaroidLayer.appendChild(card);
+    }
+  }
+
+  setTimeout(placePolaroidsFixed, 150);
+  window.addEventListener("resize", placePolaroidsFixed);
+
+  // ===== Buttons / Effects =====
+  // Animate ONLY the heart (photos won't move when buttons are clicked)
+  function beatHeart() {
+    heart.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(1.08)" }, { transform: "scale(1)" }],
+      { duration: 260, easing: "ease-out" }
+    );
+  }
+
+  function typeWriter(text, speedMs = 34) {
+    message.innerHTML = "";
+    message.classList.add("show", "cursor");
+    let i = 0;
+    (function tick(){
+      if (i < text.length) {
+        message.innerHTML += text.charAt(i++);
+        setTimeout(tick, speedMs);
+      } else {
+        message.classList.remove("cursor");
+      }
+    })();
+  }
+
+  function hugBurst(){
+    for (let i = 0; i < 25; i++) {
+      const floating = document.createElement("div");
+      floating.className = "floating-heart";
+      floating.innerText = "💗";
+      floating.style.left = Math.random() * 100 + "vw";
+      floating.style.fontSize = (Math.random() * 18 + 16) + "px";
+      floating.style.animationDuration = (Math.random() * 2 + 3) + "s";
+      document.body.appendChild(floating);
+      setTimeout(() => floating.remove(), 4500);
+    }
+  }
+
+  // ===== Music =====
+  const bgm = document.getElementById("bgm");
+  const musicBtn = document.getElementById("musicBtn");
+  const musicStatus = document.getElementById("musicStatus");
+  let musicReady = false;
+
+  bgm.volume = 0.65;
+  document.documentElement.style.setProperty("--pulseDur", "1.05s");
+  function setMusicStatus(txt){ musicStatus.textContent = txt || ""; }
+
+  async function tryStartMusic(){
+    try{
+      setMusicStatus("");
+      bgm.load();
+      await new Promise(r => setTimeout(r, 80));
+      const p = bgm.play();
+      if (p && typeof p.then === "function") await p;
+
+      musicReady = true;
+      document.body.classList.add("playing");
+      musicBtn.textContent = "Pause music ⏸";
+      setMusicStatus("Playing 🎶");
+    }catch(e){
+      setMusicStatus("Tap again if it didn't start (browser autoplay rule).");
+    }
+  }
+
+  musicBtn.addEventListener("click", async () => {
+    if (bgm.paused) {
+      await tryStartMusic();
+    } else {
+      bgm.pause();
+      document.body.classList.remove("playing");
+      musicBtn.textContent = "Play music 🎶";
+      setMusicStatus("Paused");
+    }
+  });
+
+  bgm.addEventListener("error", () => {
+    setMusicStatus("Audio couldn't load. Make sure forever-lady-of-soul.mp3 is next to index.html.");
+    document.body.classList.remove("playing");
+  });
+
+  document.getElementById("missBtn").addEventListener("click", () => {
+    beatHeart();
+    typeWriter("you will always be the one i love, forever and ever. <3", 34);
+    if (!musicReady && bgm.paused) tryStartMusic();
+  });
+
+  document.getElementById("hugBtn").addEventListener("click", () => {
+    beatHeart();
+    hugBurst();
+    if (!musicReady && bgm.paused) tryStartMusic();
+  });
+</script>
+
+</body>
+</html>
