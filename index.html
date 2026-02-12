@@ -70,7 +70,7 @@
   }
 
   @keyframes slowPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.045);} }
- body.playing .heart{ animation: slowPulse var(--pulseDur,1.05s) ease-in-out infinite; }
+ body.playing .heart{ animation: slowPulse var(--pulseDur,1.01s) ease-in-out infinite; }
 
 
   /* ===== Stationary Polaroids (spread out + gentle drift) ===== */
@@ -335,7 +335,7 @@
     const cx = layerRect.width / 2;
     const cy = layerRect.height / 2;
 
-    const innerR = Math.min(layerRect.width, layerRect.height) * 0.54;
+    const innerR = Math.min(layerRect.width, layerRect.height) * 0.77;
     const outerR = Math.min(layerRect.width, layerRect.height) * 0.86;
 
     function overlaps(x,y,w,h){
