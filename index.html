@@ -205,11 +205,62 @@
     .heart { width: 340px; height: 340px; }
     .text { font-size: 15px; }
   }
+  /* ===== Floating polaroid memories ===== */
+.memory-layer{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1; /* between stars (0) and heart (2) */
+  overflow: hidden;
+}
+
+.polaroid{
+  position: absolute;
+  width: clamp(120px, 18vw, 190px);
+  padding: 10px 10px 22px 10px; /* extra bottom like a polaroid */
+  border-radius: 14px;
+  background: rgba(255,255,255,0.92);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.55),
+    0 0 22px rgba(255,105,180,.18);
+  transform: translateY(0) rotate(var(--r, 0deg));
+  opacity: 0;
+  animation: floatPolaroid var(--dur, 11s) linear forwards;
+  backdrop-filter: blur(2px);
+}
+
+.polaroid img{
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.polaroid .cap{
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(0,0,0,.75);
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes floatPolaroid{
+  0%   { opacity: 0; transform: translateY(12vh) rotate(var(--r)); }
+  12%  { opacity: 0.95; }
+  88%  { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-120vh) rotate(var(--r)); }
+}
+
 </style>
 </head>
 
 <body>
   <div class="starfield" id="starfield"></div>
+  <div class="memory-layer" id="memoryLayer"></div>
 
   <div class="heart-wrap" id="heartWrap">
     <div class="glow"></div>
@@ -511,6 +562,69 @@
     hugBurst();
     if (!musicReady && bgm.paused) tryStartMusic();
   });
+  // Floating polaroid memories//
+  // ===== Floating Polaroid Memories =====
+const memoryLayer = document.getElementById("memoryLayer");
+
+// IMPORTANT: put your real filenames here
+const photos = [
+  "photo1.jpg",
+  "photo2.jpg",
+  "photo3.jpg",
+  "photo4.jpg"
+];
+
+// optional captions (or remove this array + caption line)
+const captions = [
+  "us 💗",
+  "my favorite person",
+  "always & forever",
+  "I love you"
+];
+
+function spawnPolaroid(){
+  if (!memoryLayer) return;
+
+  // keep the page smooth: max polaroids on screen
+  const MAX_ON_SCREEN = 10;
+  if (memoryLayer.children.length >= MAX_ON_SCREEN) return;
+
+  const card = document.createElement("div");
+  card.className = "polaroid";
+
+  const img = document.createElement("img");
+  img.src = photos[Math.floor(Math.random() * photos.length)];
+  img.alt = "memory";
+
+  const cap = document.createElement("div");
+  cap.className = "cap";
+  cap.textContent = captions[Math.floor(Math.random() * captions.length)];
+
+  // position + motion
+  const left = Math.random() * 92; // vw
+  const rot = (Math.random() * 18 - 9).toFixed(2); // -9..9 deg
+  const dur = (Math.random() * 7 + 10).toFixed(2); // 10..17s
+
+  card.style.left = left + "vw";
+  card.style.bottom = "-220px";
+  card.style.setProperty("--r", rot + "deg");
+  card.style.setProperty("--dur", dur + "s");
+
+  // slight size variety
+  card.style.transform = `rotate(${rot}deg) scale(${(Math.random()*0.12 + 0.94).toFixed(2)})`;
+
+  card.appendChild(img);
+  card.appendChild(cap);
+  memoryLayer.appendChild(card);
+
+  // cleanup
+  setTimeout(() => card.remove(), (parseFloat(dur) * 1000) + 500);
+}
+
+// start with a few, then keep spawning
+for (let i = 0; i < 4; i++) setTimeout(spawnPolaroid, i * 900);
+setInterval(spawnPolaroid, 4500);
+
 </script>
 
 </body>
