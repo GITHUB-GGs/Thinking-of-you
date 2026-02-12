@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>For You ❤️</title>
+<title>Happy valentines day Paris!!❤️</title>
 
 <style>
   :root{
@@ -272,7 +272,7 @@
   function rand(min, max){ return Math.random() * (max - min) + min; }
 
   const starfield = document.getElementById("starfield");
-  const STAR_COUNT = 95;
+  const STAR_COUNT = 120;
 
   for(let i=0;i<STAR_COUNT;i++){
     const s = document.createElement("div");
@@ -310,8 +310,8 @@
   const message = document.getElementById("message");
   const heartWrap = document.getElementById("heartWrap");
 
-  const phrase = "I love you";
-  const points = 44;
+  const phrase = "I love U";
+  const points = 33;
   const scale  = 12;
   const speed  = 0.6;
 
@@ -479,9 +479,7 @@
       musicBtn.textContent = "Pause music ⏸";
       setMusicStatus("Playing 🎶");
       startPulseLoop();
-    } catch (e) {
-      setMusicStatus("If it won't play: check the mp3 name/location and tap again.");
-    }
+    } catch (e) {}
   }
 
   musicBtn.addEventListener("click", async () => {
@@ -504,7 +502,7 @@
 
   document.getElementById("missBtn").addEventListener("click", () => {
     beatHeart();
-    typeWriter("you will always be the one i love, forever and ever. <3", 34);
+    typeWriter("you will always be the one i love, forever and ever. 💗", 34);
     if (!musicReady && bgm.paused) tryStartMusic();
   });
 
