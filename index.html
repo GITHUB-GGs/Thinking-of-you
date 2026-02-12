@@ -495,7 +495,7 @@
   });
 
   bgm.addEventListener("error", () => {
-    setMusicStatus("Music file not loading — make sure forever-lady-of-soul.mp3 is next to index.html.");
+    setMusicStatus();
     document.body.classList.remove("playing");
     stopPulseLoop();
   });
