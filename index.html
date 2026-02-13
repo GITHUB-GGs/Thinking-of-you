@@ -71,7 +71,7 @@
 
   /* IMPORTANT: pulse only the HEART, not the wrapper (so photos/buttons don't move) */
   @keyframes slowPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.045);} }
-  body.playing .heart{ animation: slowPulse var(--pulseDur,1.05s) ease-in-out infinite; }
+  body.playing .heart{ animation: slowPulse var(--pulseDur,0.95s) ease-in-out infinite; }
 
   /* ===== Polaroids (fixed positions + gentle drift) ===== */
   .polaroid-layer{
