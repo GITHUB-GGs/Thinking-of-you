@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thinking of you</title>
+  <style>
+    :root{
+      --pink:#ff4fb2;
+      --pink2:#ff7fd1;
+      --purple:#b56cff;
+      --bg:#05050a;
+      --ink:rgba(255,255,255,.92);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 900px at 50% 45%, rgba(255,79,178,.12), transparent 60%),
+        radial-gradient(700px 700px at 60% 55%, rgba(181,108,255,.10), transparent 65%),
+        var(--bg);
+      color:var(--ink);
+      overflow:hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* ======= stylized twinkling stars ======= */
+    #starfield{position:fixed; inset:0; pointer-events:none; z-index:0;}
+    .star{
+      position:absolute;
+      width:10px; height:10px;
+      opacity:.55;
+      filter: drop-shadow(0 0 6px rgba(181,108,255,.35));
+      animation: twinkle 2.6s ease-in-out infinite;
+      transform-origin:center;
+      will-change: transform, opacity;
+    }
+    .star::before{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(181,108,255,.85));
+      clip-path: polygon(
+        50% 0%,
+        61% 34%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 34%
+      );
+      border-radius:2px;
+    }
+    @keyframes twinkle{
+      0%,100%{opacity:.25; transform:scale(.85) rotate(0deg)}
+      50%{opacity:.95; transform:scale(1.15) rotate(8deg)}
+    }
+
+    /* ======= center stage ======= */
+    .stage{
+      position:fixed; inset:0;
+      display:grid;
+      place-items:center;
+      z-index:2;
+      pointer-events:none;
+    }
+
+    /* polaroids sit around, independent of heart animations */
+    #polaroidLayer{
+      position:fixed;
+      inset:0;
+      z-index:3;
+      pointer-events:none;
+    }
+
+    .polaroid{
+      position:absolute;
+      width:clamp(140px, 14vw, 220px);
+      border-radius:14px;
+      background:rgba(255,255,255,.96);
+      padding:10px 10px 18px;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.12);
+      transform: translate(-50%,-50%) rotate(var(--rot, 0deg));
+      will-change: transform;
+    }
+    .polaroid .tape{
+      position:absolute;
+      top:-10px; left:18px;
+      width:52px; height:20px;
+      background:rgba(220,220,220,.85);
+      border-radius:4px;
+      transform: rotate(-8deg);
+      box-shadow: 0 6px 14px rgba(0,0,0,.25);
+      opacity:.9;
+    }
+    .polaroid img{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      object-fit:cover;
+      border-radius:10px;
+      display:block;
+      background:#e9e9ee;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+    .polaroid .cap{
+      margin-top:10px;
+      text-align:center;
+      color:rgba(0,0,0,.78);
+      font-size:12px;
+      letter-spacing:.2px;
+      line-height:1.15;
+      min-height:14px;
+    }
+
+    /* subtle drift that doesn't affect layout */
+    .polaroid .drift{
+      animation: drift 6.5s ease-in-out infinite;
+      transform-origin:center;
+    }
+    @keyframes drift{
+      0%,100%{transform: translate3d(0,0,0) rotate(0deg)}
+      50%{transform: translate3d(0,-7px,0) rotate(0.6deg)}
+    }
+
+    /* ======= heart ======= */
+    #heartWrap{
+      position:relative;
+      width:min(520px, 80vw);
+      height:min(520px, 80vw);
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+      filter: drop-shadow(0 0 28px rgba(255,79,178,.18));
+      transform: translateZ(0);
+      will-change: transform, filter;
+    }
+    /* ambient glow behind heart */
+    #heartWrap::before{
+      content:"";
+      position:absolute;
+      width: 72%;
+      height: 72%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 45% 45%, rgba(255,79,178,.28), transparent 62%),
+        radial-gradient(circle at 60% 60%, rgba(181,108,255,.16), transparent 70%);
+      filter: blur(22px);
+      opacity:.9;
+      transform: translateY(6px);
+      z-index:0;
+    }
+    #heart{
+      position:absolute;
+      inset: 0;
+      z-index:1;
+    }
+    .loveWord{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%) translate(var(--x), var(--y)) rotate(var(--r));
+      color: var(--pink2);
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      text-shadow: 0 0 10px rgba(255,255,255,.25), 0 0 16px rgba(255,79,178,.45);
+      white-space: nowrap;
+      opacity:.95;
+      will-change: transform;
+      user-select:none;
+    }
+
+    /* rotate the words around the heart shape (heart itself stays in place) */
+    .spin{
+      animation: spin 14s linear infinite;
+      transform-origin: 50% 50%;
+    }
+    @keyframes spin{
+      from{transform: rotate(0deg)}
+      to{transform: rotate(360deg)}
+    }
+
+    /* heart pulse (used on button press + now playing) */
+    .pulseOnce{
+      animation: pulseOnce .55s ease-out 1;
+    }
+    @keyframes pulseOnce{
+      0%{transform: scale(1)}
+      40%{transform: scale(1.05)}
+      100%{transform: scale(1)}
+    }
+    .musicPulse{
+      animation: musicPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes musicPulse{
+      0%,100%{transform: scale(1)}
+      50%{transform: scale(1.02)}
+    }
+
+    /* ======= UI controls ======= */
+    .ui{
+      position:fixed;
+      left:50%;
+      top:72%;
+      transform: translateX(-50%);
+      text-align:center;
+      z-index:5;
+      pointer-events:auto;
+      width:min(680px, 92vw);
+    }
+    .buttons{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    button{
+      appearance:none;
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.92);
+      border: 2px solid rgba(255,79,178,.85);
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-size: 13px;
+      letter-spacing: .3px;
+      box-shadow: 0 0 18px rgba(255,79,178,.18);
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+      user-select:none;
+    }
+    button:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(255,79,178,.28);
+      background: rgba(0,0,0,.45);
+    }
+    button:active{transform: translateY(0px) scale(.99)}
+    .hidden-message{
+      min-height: 28px;
+      font-size: 14px;
+      letter-spacing: 1px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .45s ease, transform .45s ease;
+      text-shadow: 0 0 12px rgba(255,255,255,.18);
+      line-height: 1.35;
+      padding: 0 10px;
+    }
+    .hidden-message.show{
+      opacity: 1;
+      transform: translateY(0px);
+    }
+
+    /* Now Playing glow */
+    #musicStatus{
+      margin-top:6px;
+      font-size: 12px;
+      opacity:0;
+      transition: opacity .35s ease;
+      color: rgba(255,255,255,.8);
+    }
+    #musicStatus.on{
+      opacity:1;
+      text-shadow: 0 0 14px rgba(255,79,178,.25), 0 0 18px rgba(181,108,255,.18);
+    }
+
+    /* ======= floating hug hearts ======= */
+    .hugHeart{
+      position:fixed;
+      left:50%;
+      top:72%;
+      transform: translate(-50%, 0);
+      z-index:6;
+      pointer-events:none;
+      font-size: 18px;
+      color: var(--pink2);
+      text-shadow: 0 0 12px rgba(255,79,178,.45);
+      animation: hugFloat 1.6s ease-out forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes hugFloat{
+      0%{opacity:0; transform: translate(-50%, 10px) scale(.9)}
+      10%{opacity:1}
+      100%{opacity:0; transform: translate(calc(-50% + var(--dx)), -180px) scale(1.15)}
+    }
+
+    /* keep things readable on very short screens */
+    @media (max-height: 700px){
+      .ui{ top:76%; }
+      .polaroid{ width:clamp(130px, 13vw, 200px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="starfield" aria-hidden="true"></div>
+
+  <div class="stage" aria-hidden="true">
+    <div id="heartWrap">
+      <div id="heart" class="spin"></div>
+    </div>
+  </div>
+
+  <div id="polaroidLayer" aria-label="memories"></div>
+
+  <div class="ui">
+    <div class="buttons">
+      <button id="missBtn">Press if you miss me 💌</button>
+      <button id="hugBtn">Press if you need a hug 💗</button>
+      <button id="musicBtn">Play music 🎶</button>
+    </div>
+    <div id="message" class="hidden-message" aria-live="polite"></div>
+    <div id="musicStatus">Now Playing ✨</div>
+  </div>
+
+  <!-- audio file must sit next to index.html in the repo -->
+  <audio id="bg" preload="auto" loop src="forever-lady-of-soul.mp3"></audio>
+
+  <script>
+    // ========= SETTINGS YOU'LL EDIT MOST =========
+    // Photos in repo root (same folder as index.html)
+    const PHOTOS = ["photo1.jpeg","photo2.jpeg","photo3.jpeg","photo4.jpeg","photo5.jpeg","photo6.jpeg","photo7.jpeg","photo8.jpeg","photo9.jpeg","photo10.jpeg","photo11.jpeg","photo12.jpeg"];
+
+    // Captions (you asked for THESE exact captions)
+    const CAPS = ["my love 💗","always & forever","i love you","my favorite person","My ladybug","Love you always","love you more","My happy place","my heart's rest","The one I love","my world","The one for me"];
+
+    // Fixed positions (percent of screen). Spread out + avoids the buttons area.
+    const ANCHORS = [
+      { left: 18, top: 15, rot: -10 },
+      { left: 50, top: 12, rot:  6  },
+      { left: 82, top: 15, rot:  10 },
+
+      { left: 10, top: 38, rot: -8  },
+      { left: 90, top: 38, rot:  8  },
+
+      { left: 24, top: 44, rot: -11 },
+      { left: 76, top: 44, rot:  11 },
+
+      { left: 12, top: 58, rot: -7  },
+      { left: 88, top: 58, rot:  7  },
+
+      { left: 26, top: 66, rot: -9  },
+      { left: 74, top: 66, rot:  9  },
+
+      { left: 50, top: 20, rot: -5  }
+    ];
+
+    // ========= STARS =========
+    (function makeStars(){
+      const starfield = document.getElementById("starfield");
+      const count = 140; // density
+      for (let i=0;i<count;i++){
+        const s = document.createElement("div");
+        s.className = "star";
+        const size = 6 + Math.random()*12;
+        s.style.width = size + "px";
+        s.style.height = size + "px";
+        s.style.left = (Math.random()*100) + "vw";
+        s.style.top  = (Math.random()*100) + "vh";
+        s.style.opacity = (0.18 + Math.random()*0.72).toFixed(2);
+        s.style.animationDelay = (-Math.random()*3.5) + "s";
+        s.style.animationDuration = (1.8 + Math.random()*2.8).toFixed(2) + "s";
+        s.style.transform = "rotate(" + ((Math.random()*20)-10).toFixed(1) + "deg)";
+        starfield.appendChild(s);
+      }
+    })();
+
+    // ========= HEART TEXT (spaced + readable) =========
+    function heartPoint(t){
+      const x = 16*Math.pow(Math.sin(t),3);
+      const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+      return {x:x, y:y};
+    }
+
+    function buildHeartWords(){
+      const heart = document.getElementById("heart");
+      heart.innerHTML = "";
+      const N = 44; // fewer = more spaced / readable
+      const scale = Math.min(window.innerWidth, window.innerHeight) * 0.018; // responsive
+      for (let i=0;i<N;i++){
+        const t = (i/N) * Math.PI * 2;
+        const p = heartPoint(t);
+        const span = document.createElement("div");
+        span.className = "loveWord";
+        span.textContent = "I love you";
+        const x = p.x * scale;
+        const y = -p.y * scale;
+        const dt = 0.0008;
+        const p2 = heartPoint(t+dt);
+        const x2 = p2.x * scale;
+        const y2 = -p2.y * scale;
+        const angle = Math.atan2((y2-y),(x2-x)) * (180/Math.PI);
+        span.style.setProperty("--x", x.toFixed(2)+"px");
+        span.style.setProperty("--y", y.toFixed(2)+"px");
+        span.style.setProperty("--r", (angle+90).toFixed(1)+"deg");
+        heart.appendChild(span);
+      }
+    }
+    buildHeartWords();
+    window.addEventListener("resize", buildHeartWords);
+
+    // ========= POLAROIDS (fixed positions + gentle drift) =========
+    function buildPolaroids(){
+      const layer = document.getElementById("polaroidLayer");
+      layer.innerHTML = "";
+      const n = Math.min(PHOTOS.length, ANCHORS.length);
+      for (let i=0;i<n;i++){
+        const a = ANCHORS[i];
+        const wrap = document.createElement("div");
+        wrap.className = "polaroid";
+        wrap.style.left = a.left + "%";
+        wrap.style.top = a.top + "%";
+        wrap.style.setProperty("--rot", (a.rot||0) + "deg");
+
+        const drift = document.createElement("div");
+        drift.className = "drift";
+        drift.style.animationDelay = (-Math.random()*3.5) + "s";
+        drift.style.animationDuration = (5.2 + Math.random()*3.4).toFixed(2) + "s";
+
+        const tape = document.createElement("div");
+        tape.className = "tape";
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.alt = CAPS[i] || "memory";
+        img.src = PHOTOS[i];
+        img.onerror = () => {
+          img.removeAttribute("src");
+          img.style.background = "linear-gradient(135deg, #e9e9ee, #d9d9e4)";
+        };
+
+        const cap = document.createElement("div");
+        cap.className = "cap";
+        cap.textContent = CAPS[i] || "";
+
+        drift.appendChild(tape);
+        drift.appendChild(img);
+        drift.appendChild(cap);
+        wrap.appendChild(drift);
+        layer.appendChild(wrap);
+      }
+    }
+    buildPolaroids();
+
+    // ========= BUTTONS / EFFECTS =========
+    const heartWrap = document.getElementById("heartWrap");
+    const msgEl = document.getElementById("message");
+    const missBtn = document.getElementById("missBtn");
+    const hugBtn = document.getElementById("hugBtn");
+
+    function pulseHeartOnce(){
+      heartWrap.classList.remove("pulseOnce");
+      void heartWrap.offsetWidth;
+      heartWrap.classList.add("pulseOnce");
+    }
+
+    function typewriter(text){
+      msgEl.textContent = "";
+      msgEl.classList.add("show");
+      let i=0;
+      const timer = setInterval(()=>{
+        msgEl.textContent += text[i] || "";
+        i++;
+        if(i>text.length){ clearInterval(timer); }
+      }, 22);
+    }
+
+    missBtn.addEventListener("click", ()=>{
+      pulseHeartOnce();
+      typewriter("you will always be the one i love, forever and ever. <3");
+    });
+
+    hugBtn.addEventListener("click", ()=>{
+      pulseHeartOnce();
+      const bursts = 10;
+      for(let i=0;i<bursts;i++){
+        const h = document.createElement("div");
+        h.className = "hugHeart";
+        h.textContent = "💗";
+        const dx = (Math.random()*240 - 120).toFixed(0) + "px";
+        h.style.setProperty("--dx", dx);
+        h.style.animationDelay = (Math.random()*0.18).toFixed(2) + "s";
+        h.style.fontSize = (16 + Math.random()*10).toFixed(0) + "px";
+        document.body.appendChild(h);
+        h.addEventListener("animationend", ()=> h.remove());
+      }
+    });
+
+    // ========= MUSIC (click-to-play compliant) =========
+    const audio = document.getElementById("bg");
+    const musicBtn = document.getElementById("musicBtn");
+    const musicStatus = document.getElementById("musicStatus");
+    let musicOn = false;
+
+    async function startMusic(){
+      try{
+        await audio.play();
+        musicOn = true;
+        musicBtn.textContent = "Pause music 🎶";
+        musicStatus.classList.add("on");
+        heartWrap.classList.add("musicPulse");
+        musicStatus.textContent = "Now Playing ✨";
+      }catch(e){
+        musicStatus.textContent = "Tap again to allow audio ✨";
+        musicStatus.classList.add("on");
+      }
+    }
+
+    function stopMusic(){
+      audio.pause();
+      musicOn = false;
+      musicBtn.textContent = "Play music 🎶";
+      heartWrap.classList.remove("musicPulse");
+      musicStatus.textContent = "Paused";
+      musicStatus.classList.add("on");
+      setTimeout(()=>musicStatus.classList.remove("on"), 900);
+    }
+
+    musicBtn.addEventListener("click", async ()=>{
+      pulseHeartOnce();
+      if(!musicOn) await startMusic();
+      else stopMusic();
+    });
+  </script>
+</body>
+</html>
