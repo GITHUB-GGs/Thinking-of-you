@@ -325,18 +325,36 @@
   requestAnimationFrame(animate);
 
   // ===== Polaroids (fixed positions = never lose a photo on refresh) =====
-  const photos = ["photo1.jpeg","photo2.jpeg","photo3.jpeg","photo4.jpeg"];
-  const captions = ["my love 💗","always & forever","i love you","my favorite person"];
+  const photos = ["photo1.jpeg","photo2.jpeg","photo3.jpeg","photo4.jpeg","photo5.jpeg","photo6.jpeg","photo7.jpeg","photo8.jpeg","photo9.jpeg","photo10.jpeg","photo11.jpeg","photo12.jpeg"];
+  const captions = ["my love 💗","always & forever","i love you","my favorite person", "My ladybug","Love you always","love you more","My happy place","my heart's rest","The one I love","my world","The one for me"];
 
   const polaroidLayer = document.getElementById("polaroidLayer");
 
   // 4 distinct anchor spots around the heart
   const ANCHORS = [
-    { a: -60,  r: 1.05 }, // top-right
-    { a: -120, r: 1.05 }, // top-left
-    { a: 130,  r: 1.25 }, // bottom-left
-    { a: 50,   r: 1.25 }, // bottom-right
-  ];
+const ANCHORS = [
+  // top ring
+  { left: 20, top: 14, rot: -10 },
+  { left: 40, top: 10, rot:  6 },
+  { left: 60, top: 10, rot: -5 },
+  { left: 80, top: 14, rot:  10 },
+
+  // mid sides
+  { left: 10, top: 38, rot: -8 },
+  { left: 90, top: 38, rot:  8 },
+
+  // around heart sides
+  { left: 18, top: 52, rot: -10 },
+  { left: 82, top: 52, rot:  10 },
+
+  // lower corners (keep above buttons)
+  { left: 22, top: 66, rot: -7 },
+  { left: 78, top: 66, rot:  9 },
+
+  // extra near-lower sides
+  { left: 35, top: 70, rot: -4 },
+  { left: 65, top: 70, rot:  5 },
+];
 
   function placePolaroidsFixed(){
     polaroidLayer.innerHTML = "";
