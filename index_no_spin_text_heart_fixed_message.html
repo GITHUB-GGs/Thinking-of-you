@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Thinking of you</title>
+  <style>
+    :root{
+      --bg:#050007;
+      --pink:#ff4fb8;
+      --pink2:#ff77c8;
+      --purple:#a55cff;
+      --text:#ffd7ee;
+      --ui:#ff63c2;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0}
+    body{
+      background: radial-gradient(1200px 800px at 50% 45%, rgba(180,40,120,.12), transparent 65%),
+                  radial-gradient(900px 600px at 50% 55%, rgba(120,60,255,.08), transparent 70%),
+                  var(--bg);
+      overflow:hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color: var(--text);
+    }
+
+    /* ===== Stars ===== */
+    #starfield{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+    }
+    .star{
+      position:absolute;
+      width: 14px;
+      height: 14px;
+      opacity:.55;
+      filter: drop-shadow(0 0 10px rgba(165,92,255,.35));
+      animation: twinkle var(--tw, 3.2s) ease-in-out infinite;
+      transform: translate(-50%,-50%) rotate(var(--r,0deg)) scale(var(--s,1));
+    }
+    @keyframes twinkle{
+      0%,100%{ opacity:.25; filter: drop-shadow(0 0 6px rgba(165,92,255,.25)); }
+      50%{ opacity:.9; filter: drop-shadow(0 0 14px rgba(165,92,255,.55)); }
+    }
+
+    /* ===== Main stage ===== */
+    .stage{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      z-index:1;
+    }
+
+    .heart-wrap{
+      position:relative;
+      width:min(520px, 92vw);
+      height:min(520px, 92vw);
+      display:grid;
+      place-items:center;
+      transform: translateY(-12px);
+    }
+
+    /* Soft ambient glow behind heart */
+    .ambient-glow{
+      position:absolute;
+      inset:-28%;
+      background: radial-gradient(circle at 50% 55%,
+        rgba(255,79,184,.30),
+        rgba(255,79,184,.10) 38%,
+        rgba(120,60,255,.07) 55%,
+        transparent 72%);
+      filter: blur(18px);
+      opacity:.95;
+      z-index:1;
+      pointer-events:none;
+    }
+
+    /* The "filled" soft heart body (subtle, not spinning) */
+    .heart-fill{
+      position:absolute;
+      width: 58%;
+      height: 58%;
+      background: radial-gradient(circle at 35% 30%,
+        rgba(255,119,200,.22),
+        rgba(255,79,184,.10) 40%,
+        rgba(120,60,255,.06) 62%,
+        transparent 74%);
+      filter: blur(0.2px);
+      border-radius: 30%;
+      transform: rotate(-12deg);
+      opacity:.95;
+      z-index:2;
+      pointer-events:none;
+      mask-image: radial-gradient(circle at 50% 58%, #000 55%, transparent 70%);
+    }
+
+    /* Heart "text outline" layer (words form the heart shape) */
+    #heartText{
+      position:absolute;
+      inset:0;
+      z-index:3;
+      pointer-events:none;
+    }
+    .heart-word{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      color: rgba(255,119,200,.92);
+      font-size: 14px;
+      letter-spacing: 1.4px;
+      text-shadow:
+        0 0 10px rgba(255,79,184,.55),
+        0 0 22px rgba(255,79,184,.25);
+      white-space:nowrap;
+      user-select:none;
+      will-change: transform;
+    }
+
+    /* A gentle pulse ONLY on the heart when music plays */
+    .music-pulse{
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ transform: translateY(-12px) scale(1); }
+      50%{ transform: translateY(-12px) scale(1.02); }
+    }
+
+    /* ===== Polaroids (fixed positions + subtle drift) ===== */
+    #polaroidLayer{
+      position:fixed;
+      inset:0;
+      z-index:2; /* under UI, above stars */
+      pointer-events:none;
+    }
+    .polaroid{
+      position:absolute;
+      width: 175px;
+      background: rgba(255,255,255,.96);
+      border-radius: 14px;
+      padding: 12px 12px 18px 12px;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.55),
+        0 0 18px rgba(255,79,184,.10);
+      transform: translate(-50%,-50%) rotate(var(--rot,0deg));
+      filter: saturate(1.02) contrast(1.02);
+      opacity: .98;
+    }
+    .polaroid::before{
+      content:"";
+      position:absolute;
+      width: 46px;
+      height: 18px;
+      left: 18px;
+      top: -7px;
+      background: rgba(255,255,255,.55);
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.25);
+      transform: rotate(-6deg);
+    }
+    .polaroid img{
+      width:100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      display:block;
+      background:#f0f0f0;
+    }
+    .caption{
+      margin-top: 10px;
+      text-align:center;
+      color:#3b3b3b;
+      font-size: 11px;
+      letter-spacing: .5px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    /* subtle drift without "moving position" feeling */
+    .drift{
+      animation: drift var(--d, 10s) ease-in-out infinite;
+    }
+    @keyframes drift{
+      0%,100%{ transform: translate(-50%,-50%) rotate(var(--rot,0deg)) translate(0,0); }
+      50%{ transform: translate(-50%,-50%) rotate(var(--rot,0deg)) translate(var(--dx, 6px), var(--dy, -6px)); }
+    }
+
+    /* ===== UI ===== */
+    .ui{
+      position:fixed;
+      left:50%;
+      bottom: 46px;
+      transform: translateX(-50%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 10px;
+      z-index:10; /* above polaroids */
+      width:min(860px, 92vw);
+      padding: 0 10px;
+      pointer-events:auto;
+    }
+    .buttons{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content:center;
+    }
+    button{
+      background: rgba(0,0,0,.35);
+      border: 2px solid rgba(255,99,194,.8);
+      color: rgba(255,215,238,.95);
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-size: 13px;
+      letter-spacing:.3px;
+      box-shadow: 0 0 18px rgba(255,79,184,.12);
+      transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+    }
+    button:hover{
+      background: rgba(20,0,18,.55);
+      box-shadow: 0 0 26px rgba(255,79,184,.22);
+      transform: translateY(-1px);
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+
+    .hidden-message{
+      min-height: 24px;
+      text-align:center;
+      line-height: 1.25;
+      font-size: 14px;
+      color: rgba(255,215,238,.98);
+      text-shadow: 0 0 14px rgba(255,79,184,.18);
+      max-width: 760px;
+      padding: 2px 10px 0;
+      user-select:none;
+    }
+
+    /* Typewriter caret */
+    .caret{
+      display:inline-block;
+      width: 10px;
+      margin-left: 2px;
+      opacity: .9;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink{ 50%{opacity:0;} }
+
+    /* Now Playing glow */
+    .now-playing{
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity .35s ease;
+      color: rgba(255,215,238,.9);
+      text-shadow: 0 0 12px rgba(255,79,184,.35);
+      user-select:none;
+    }
+    .now-playing.on{
+      opacity: 1;
+      filter: drop-shadow(0 0 10px rgba(255,79,184,.35));
+    }
+
+    /* Mobile tweaks */
+    @media (max-width:560px){
+      .polaroid{ width: 150px; }
+      .polaroid img{ height: 132px; }
+      .heart-word{ font-size: 12px; letter-spacing: 1.2px; }
+      button{ font-size: 12px; padding: 9px 14px; }
+      .ui{ bottom: 34px; }
+      .hidden-message{ font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="starfield" aria-hidden="true"></div>
+
+  <div class="stage">
+    <div class="heart-wrap" id="heartWrap">
+      <div class="ambient-glow"></div>
+      <div class="heart-fill"></div>
+      <div id="heartText" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div id="polaroidLayer" aria-label="memories"></div>
+
+  <div class="ui">
+    <div class="buttons">
+      <button id="missBtn">Press if you miss me 💌</button>
+      <button id="hugBtn">Press if you need a hug 💗</button>
+      <button id="musicBtn">Play music 🎶</button>
+    </div>
+    <div class="hidden-message" id="message"></div>
+    <div class="now-playing" id="nowPlaying">Now Playing ✨</div>
+  </div>
+
+  <audio id="bgm" preload="auto" loop src="forever-lady-of-soul.mp3"></audio>
+
+  <script>
+    // =========================
+    // Stars (denser, no text)
+    // =========================
+    const starfield = document.getElementById('starfield');
+    const STAR_COUNT = 220; // density
+    function starSvg(){
+      // Simple 5-point star SVG (no "star" text)
+      return `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2.6l2.9 6.2 6.7.6-5.1 4.4 1.6 6.6L12 17.8 5.9 20.4l1.6-6.6-5.1-4.4 6.7-.6L12 2.6z"
+                fill="rgba(165,92,255,0.95)"/>
+        </svg>`;
+    }
+    function placeStars(){
+      starfield.innerHTML = '';
+      for(let i=0;i<STAR_COUNT;i++){
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.innerHTML = starSvg();
+        const x = Math.random()*100;
+        const y = Math.random()*100;
+        const scale = 0.55 + Math.random()*1.05;
+        const rot = Math.floor(Math.random()*360);
+        const tw = (2.2 + Math.random()*3.6).toFixed(2) + 's';
+        s.style.left = x + 'vw';
+        s.style.top  = y + 'vh';
+        s.style.setProperty('--s', scale.toFixed(2));
+        s.style.setProperty('--r', rot + 'deg');
+        s.style.setProperty('--tw', tw);
+        starfield.appendChild(s);
+      }
+    }
+    placeStars();
+    window.addEventListener('resize', () => { /* keep as-is */ });
+
+    // =========================
+    // Heart text path (words form a heart)
+    // - Heart itself stays still
+    // - Words rotate around the shape (phase shifts)
+    // =========================
+    const heartText = document.getElementById('heartText');
+    const heartWrap = document.getElementById('heartWrap');
+
+    // More points = more words; adjust for readability
+    const WORD_COUNT = 140;
+    const WORD = "I LOVE YOU";
+
+    // Parametric heart curve (classic)
+    function heartPoint(t){
+      // t in [0, 2pi]
+      const x = 16 * Math.pow(Math.sin(t),3);
+      const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+      return {x, y};
+    }
+
+    // Pre-create spans once
+    const spans = [];
+    for(let i=0;i<WORD_COUNT;i++){
+      const sp = document.createElement('div');
+      sp.className = 'heart-word';
+      sp.textContent = WORD;
+      heartText.appendChild(sp);
+      spans.push(sp);
+    }
+
+    function layoutHeart(phase){
+      const rect = heartWrap.getBoundingClientRect();
+      const cx = rect.width/2;
+      const cy = rect.height/2;
+
+      // Scale based on container size
+      const scale = Math.min(rect.width, rect.height) / 40; // tune size
+      const yScale = scale * 0.95;
+
+      // Spacing: bigger step = less overlap (more readable)
+      // We'll distribute words evenly but phase shifts make them "rotate"
+      for(let i=0;i<WORD_COUNT;i++){
+        const u = (i/WORD_COUNT) * Math.PI*2;
+        const t = u + phase; // rotate along curve
+        const p = heartPoint(t);
+
+        // Map to pixels (note: y is inverted)
+        const px = cx + p.x * scale;
+        const py = cy - p.y * yScale;
+
+        // Tangent angle for aligning text
+        const eps = 0.001;
+        const p2 = heartPoint(t + eps);
+        const dx = (p2.x - p.x);
+        const dy = -(p2.y - p.y);
+        const ang = Math.atan2(dy, dx) * (180/Math.PI);
+
+        // Position
+        spans[i].style.transform = `translate(${px}px, ${py}px) translate(-50%,-50%) rotate(${ang}deg)`;
+      }
+    }
+
+    let phase = 0;
+    // Slow rotation of words around heart
+    function animate(){
+      phase += 0.004; // rotation speed (lower = slower)
+      layoutHeart(phase);
+      requestAnimationFrame(animate);
+    }
+    layoutHeart(0);
+    requestAnimationFrame(animate);
+
+    // =========================
+    // Polaroids: fixed positions, spread out, subtle drift
+    // =========================
+    const polaroidLayer = document.getElementById('polaroidLayer');
+
+    // Your repo files (photo1.jpeg ... photo12.jpeg)
+    const photos = ["photo1.jpeg","photo2.jpeg","photo3.jpeg","photo4.jpeg","photo5.jpeg","photo6.jpeg","photo7.jpeg","photo8.jpeg","photo9.jpeg","photo10.jpeg","photo11.jpeg","photo12.jpeg"];
+
+    // Your exact captions list (must stay aligned with photos)
+    const captions = ["my love 💗","always & forever","i love you","my favorite person","My ladybug","Love you always","love you more","My happy place","my heart's rest","The one I love","my world","The one for me"];
+
+    // Fixed anchor positions around the heart (percent of viewport)
+    // Spread so they don't overlap buttons; tweak these if you want.
+    const anchors = [
+      {x: 18, y: 18, rot:-14},
+      {x: 50, y: 12, rot: 8},
+      {x: 82, y: 18, rot: 12},
+      {x: 12, y: 40, rot:-6},
+      {x: 86, y: 40, rot: 7},
+      {x: 18, y: 62, rot:-10},
+      {x: 82, y: 62, rot: 9},
+      {x: 12, y: 74, rot:-8},
+      {x: 88, y: 74, rot: 10},
+      {x: 26, y: 86, rot:-7},
+      {x: 74, y: 86, rot: 7},
+      {x: 50, y: 92, rot: 0}
+    ];
+
+    function buildPolaroids(){
+      polaroidLayer.innerHTML = '';
+      const count = Math.min(photos.length, captions.length, anchors.length);
+      for(let i=0;i<count;i++){
+        const p = document.createElement('div');
+        p.className = 'polaroid drift';
+        p.style.left = anchors[i].x + 'vw';
+        p.style.top  = anchors[i].y + 'vh';
+        p.style.setProperty('--rot', anchors[i].rot + 'deg');
+
+        // tiny drift amount randomized per photo (still "fixed")
+        const dx = (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random()*5);
+        const dy = (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random()*5);
+        p.style.setProperty('--dx', dx.toFixed(1) + 'px');
+        p.style.setProperty('--dy', dy.toFixed(1) + 'px');
+        p.style.setProperty('--d', (10 + Math.random()*8).toFixed(1) + 's');
+
+        const img = document.createElement('img');
+        img.src = photos[i];
+        img.alt = captions[i];
+
+        const cap = document.createElement('div');
+        cap.className = 'caption';
+        cap.textContent = captions[i];
+
+        p.appendChild(img);
+        p.appendChild(cap);
+        polaroidLayer.appendChild(p);
+      }
+    }
+    buildPolaroids();
+
+    // =========================
+    // UI interactions
+    // =========================
+    const messageEl = document.getElementById('message');
+    const missBtn = document.getElementById('missBtn');
+    const hugBtn = document.getElementById('hugBtn');
+    const musicBtn = document.getElementById('musicBtn');
+    const nowPlaying = document.getElementById('nowPlaying');
+    const bgm = document.getElementById('bgm');
+
+    // Typewriter effect
+    let typingTimer = null;
+    function typewriter(text, speed=26){
+      if(typingTimer) cancelAnimationFrame(typingTimer);
+      messageEl.innerHTML = '';
+      const span = document.createElement('span');
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      caret.textContent = '▍';
+      messageEl.appendChild(span);
+      messageEl.appendChild(caret);
+
+      let i=0;
+      function step(){
+        span.textContent = text.slice(0,i);
+        i++;
+        if(i <= text.length){
+          typingTimer = requestAnimationFrame(() => setTimeout(step, speed));
+        } else {
+          caret.remove();
+        }
+      }
+      step();
+    }
+
+    // Heart-only bump (photos should not move because they are in a separate fixed layer)
+    function bumpHeart(){
+      heartWrap.animate([
+        { transform: 'translateY(-12px) scale(1)' },
+        { transform: 'translateY(-12px) scale(1.03)' },
+        { transform: 'translateY(-12px) scale(1)' }
+      ], { duration: 420, easing: 'ease-out' });
+    }
+
+    // Hug hearts (pink)
+    function spawnHugHearts(){
+      const count = 10;
+      for(let i=0;i<count;i++){
+        const h = document.createElement('div');
+        h.textContent = '💗';
+        h.style.position = 'fixed';
+        h.style.left = (50 + (Math.random()*180-90)) + 'px';
+        h.style.bottom = (80 + Math.random()*40) + 'px';
+        h.style.fontSize = (18 + Math.random()*18) + 'px';
+        h.style.opacity = '0';
+        h.style.zIndex = '11';
+        h.style.filter = 'drop-shadow(0 0 10px rgba(255,79,184,.35))';
+        document.body.appendChild(h);
+
+        const dx = (Math.random()*2-1) * 140;
+        const dy = 260 + Math.random()*200;
+
+        h.animate([
+          { transform: 'translate(0,0)', opacity: 0 },
+          { transform: `translate(${dx*0.25}px, ${-dy*0.35}px)`, opacity: 1, offset: 0.25 },
+          { transform: `translate(${dx}px, ${-dy}px)`, opacity: 0 }
+        ], { duration: 1600 + Math.random()*700, easing: 'ease-out' }).onfinish = () => h.remove();
+      }
+    }
+
+    missBtn.addEventListener('click', () => {
+      bumpHeart();
+      typewriter("you will always be the one i love, forever and ever. <3");
+    });
+
+    hugBtn.addEventListener('click', () => {
+      bumpHeart();
+      spawnHugHearts();
+      typewriter("sending you a big hug across the miles 💗");
+    });
+
+    // Music: must start on click (browser policy)
+    let musicOn = false;
+    function setNowPlaying(on){
+      nowPlaying.classList.toggle('on', on);
+      heartWrap.classList.toggle('music-pulse', on);
+    }
+    musicBtn.addEventListener('click', async () => {
+      try{
+        if(!musicOn){
+          await bgm.play();
+          musicOn = true;
+          musicBtn.textContent = "Pause music ⏸️";
+          setNowPlaying(true);
+        } else {
+          bgm.pause();
+          musicOn = false;
+          musicBtn.textContent = "Play music 🎶";
+          setNowPlaying(false);
+        }
+      }catch(e){
+        // If the mp3 path/name is wrong, this will fail.
+        typewriter("I can't find the music file. Make sure it's named forever-lady-of-soul.mp3 and is next to index.html.");
+        setNowPlaying(false);
+      }
+    });
+
+    // Keep message area from overlapping on very short screens
+    // (adds bottom padding dynamically if needed)
+    function adjustUI(){
+      // no-op placeholder; UI is fixed and above polaroids via z-index
+    }
+    adjustUI();
+  </script>
+</body>
+</html>
