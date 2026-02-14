@@ -516,28 +516,34 @@
 
     // Hug hearts (pink)
     function spawnHugHearts(){
-      const count = 10;
-      for(let i=0;i<count;i++){
-        const h = document.createElement('div');
-        h.textContent = '💗';
-        h.style.position = 'fixed';
-        h.style.left = (50 + (Math.random()*180-90)) + 'px';
-        h.style.bottom = (80 + Math.random()*40) + 'px';
-        h.style.fontSize = (18 + Math.random()*18) + 'px';
-        h.style.opacity = '0';
-        h.style.zIndex = '11';
-        h.style.filter = 'drop-shadow(0 0 10px rgba(255,79,184,.35))';
-        document.body.appendChild(h);
+      const hugBtn = document.getElementById("hugBtn");
 
-        const dx = (Math.random()*2-1) * 140;
-        const dy = 260 + Math.random()*200;
+function spawnHugHearts(){
+  const r = hugBtn.getBoundingClientRect();
+  const x = r.left + r.width/2;
+  const y = r.top + r.height/2;
 
-        h.animate([
-          { transform: 'translate(0,0)', opacity: 0 },
-          { transform: `translate(${dx*0.25}px, ${-dy*0.35}px)`, opacity: 1, offset: 0.25 },
-          { transform: `translate(${dx}px, ${-dy}px)`, opacity: 0 }
-        ], { duration: 1600 + Math.random()*700, easing: 'ease-out' }).onfinish = () => h.remove();
-      }
+  for(let i=0;i<14;i++){
+    const h = document.createElement("div");
+    h.className = "hug-heart";
+    h.style.left = (x + (Math.random()*60-30)) + "px";
+    h.style.top  = (y + (Math.random()*20-10)) + "px";
+    document.body.appendChild(h);
+
+    const dx = (Math.random()*160 - 80);
+    const dy = -(140 + Math.random()*140);
+
+    h.animate([
+      { transform:`translate(0,0) scale(1)`, opacity:1 },
+      { transform:`translate(${dx}px, ${dy}px) scale(1.25)`, opacity:0 }
+    ], { duration: 1100, easing:"cubic-bezier(.2,.8,.2,1)" });
+
+    setTimeout(()=>h.remove(), 1200);
+  }
+}
+
+hugBtn.addEventListener("click", spawnHugHearts);
+
     }
 
     missBtn.addEventListener('click', () => {
