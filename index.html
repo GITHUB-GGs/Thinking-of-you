@@ -55,12 +55,14 @@
     }
 
     .heart-wrap{
-      position:relative;
-      width:min(520px, 92vw);
-      height:min(520px, 92vw);
-      display:grid;
-      place-items:center;
-      transform: translateY(-12px);
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 78vmin);
+  height: min(560px, 78vmin);
+  z-index: 3;
+
     }
 
     /* Soft ambient glow behind heart */
